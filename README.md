@@ -1,0 +1,1 @@
+Extension of SymPy to handle expressions from PDEs
