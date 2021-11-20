@@ -540,7 +540,11 @@ class Lagrangian(GeneralForm):
         return super.__init__(self,expr,*params,name=None)
 
 class EnergyForm:
-    def __init__(self,domain=[],boundary=[]):
+    def __init__(self,domain=None,boundary=None):
+        if domain is None:
+            domain = []
+        if boundary is None:
+            boundary = []
         if not isinstance(domain,list) or not isinstance(boundary,list):
             raise TypeError
         for item in domain + boundary:
@@ -717,7 +721,9 @@ class PDE(TestTrialBase):
         return f'[{lhs} = {rhs}] over {self.over}'
 
 class lhsForm(TestTrialBase):
-    def __init__(self,trial_func,test_func,name=None,forms=[]):
+    def __init__(self,trial_func,test_func,name=None,forms=None):
+        if forms is None:
+            forms = []
         if not isinstance(forms,list):
             raise TypeError('\'forms\' must be a List of items of type GeneralForm.')
         self.set_trial_func(trial_func)
@@ -746,7 +752,9 @@ class lhsForm(TestTrialBase):
             self.forms.append(form)
 
 class rhsForm(TestTrialBase):
-    def __init__(self,test_func,name=None,forms=[]):
+    def __init__(self,test_func,name=None,forms=None):
+        if forms is None:
+            forms = []
         if not isinstance(forms,list):
             raise TypeError('\'forms\' must be a List of items of type GeneralForm.')
         self.set_test_func(test_func)
