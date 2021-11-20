@@ -35,24 +35,6 @@ def is_linear_param(expression,parameter):
 
     return True
 
-# Type alterers
-
-def uflfy(expression):
-    """ Returns the UFL code for a scalar or a QVector. First checks if
-    'expression' is a matrix. If not, then returns C code for the expression.
-    This is a crude way to check for a scalar, but in practice it should work.
-    Otherwise, checks if the expression is a 3D or 5D vector and returns the C
-    code for that expression. """
-
-    if not isinstance(expression,MutableDenseMatrix):
-        return ccode(expression)
-    elif isvector(expression,3):
-        return 'as_vector([' + ','.join([ccode(expression[ii]) for ii in range(3)]) + '])'
-    elif isvector(expression,5):
-        return 'as_vector([' + ','.join([ccode(expression[ii]) for ii in range(5)]) + '])'
-    else:
-        raise TypeError('Must be a vector expression of dimension 3 or 5.')
-
 # Calculus of variations and Newton's method
 
 def newtonsMethod(lhs_form,rhs_form,const_func,trial_func,test_func):
