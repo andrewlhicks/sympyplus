@@ -540,7 +540,11 @@ class Lagrangian(GeneralForm):
         return super.__init__(self,expr,*params,name=None)
 
 class EnergyForm:
-    def __init__(self,domain=None,boundary=None):
+    def __init__(self,*params,domain=None,boundary=None):
+        # Type checking
+
+        if len(params) != 3:
+            raise TypeError('EnergyForm requires exactly 3 Params.')
         if domain is None:
             domain = []
         if boundary is None:
@@ -553,7 +557,6 @@ class EnergyForm:
         
         # Initialize params
 
-        params = [[Dq,q],[Dp,p],[Dr,r]] # For now, let the params be fixed, but allow customization later
         self.__params = [Param(param) for param in params]
 
         # Initialize domain
@@ -783,36 +786,5 @@ class rhsForm(TestTrialBase):
 # Set up variable with respect to which we will take derivatives
 
 x = [Symbol('x0'),Symbol('x1'),Symbol('x2')]
-
-# Set up Qvector objects
-
-nu = AbstractVector('nu')
-
-q = QVector('q')
-Dq = q.grad
-Q = q.tens
-
-p = QVector('p')
-Dp = p.grad
-P = p.tens
-
-r = QVector('r')
-Dr = r.grad
-R = r.tens
-
-qp = QVector('q_prev')
-Dqp = qp.grad
-QP = qp.tens
-
-qpp = QVector('q_prev_prev')
-Dqpp = qpp.grad
-QPP = qpp.tens
-
-qnp = QVector('q_newt_prev')
-Dqnp = qnp.grad
-QNP = qnp.tens
-
-f = QVector('f')
-g = QVector('g')
 
 # END OF CODE
