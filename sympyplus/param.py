@@ -1,5 +1,6 @@
 from sympyplus.qvector import AbstractVectorGradient, QVector
 from sympyplus.fy import uflfy
+import numpy as np
 
 class Param:
     """ Defines a Param object from a list of length 2, or a Param object. The
@@ -25,10 +26,16 @@ class Param:
             return True
         else:
             return False
+    def __add__(self,other):
+        if not isinstance(other,Param):
+            raise TypeError('Must be Param.')
+        return Param([self.der+other.der,self.vec+other.vec])
+    def __mul__(self,other):
+        return Param([self.der*other,self.vec*other])
     def explode(self):
-        """ Returns the Symbols of the Param as a list. """
+        """ Returns the Symbols of the Param as a list. Will be deprecated. """
         return [self.der[ii,jj] for ii in range(5) for jj in range(3)] + [self.vec[ii] for ii in range(5)]
-
+    
     # Properties
     @property
     def der(self):
@@ -36,6 +43,10 @@ class Param:
     @property
     def vec(self):
         return self.__vec
+    @property
+    def symbols(self):
+        """ Returns the Symbols of the Param as a NumPy array. """
+        return np.array([self.der[ii,jj] for ii in range(5) for jj in range(3)] + [self.vec[ii] for ii in range(5)])
     
     # Setters
     @der.setter
@@ -115,6 +126,32 @@ class GeneralForm:
                 new_expr = new_expr.subs(old,new)
 
         return GeneralForm(new_expr,*new_params,name=self.name)
+
+    @staticmethod
+    def __subs_param(expr,old_param,new_param):
+        """ Takes an expr, substitutese the old_param for new_param,
+        then returns the resulting expr. """
+        old_symbols = old_param.symbols
+        new_symbols = new_param.symbols
+
+        subs_mat = np.stack((old_symbols,new_symbols)).T
+
+        return expr.subs(subs_mat)
+
+    def eval(self,*params):
+        """ Evaluates the GeneralForm by pluggin in the params specified,
+        then returns the new expr. """
+        if len(params) == 0:
+            return self.expr
+        if len(params) != len(self.params):
+            raise ValueError('Number of args should match number of params.')
+        
+        expr = self.expr
+
+        for old_param, new_param in zip(self.params, params):
+            expr = self.__subs_param(expr,old_param,new_param)
+        
+        return expr
 
     def mul(self,n):
         new_expr = self.expr * n
