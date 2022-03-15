@@ -53,7 +53,7 @@ class PDE_System:
         if not isinstance(boundary_PDE,PDE):
             raise TypeError
         if not boundary_PDE.over == 'boundary':
-            raise ValueError('Boundary PDE must be over domain')
+            raise ValueError('Boundary PDE must be over boundary')
         self.__boundary = boundary_PDE
 
 class PDE(TestTrialBase):
@@ -65,7 +65,9 @@ class PDE(TestTrialBase):
         self.lhs = lhs
         self.rhs = rhs
         # Set over, ovr
-        self.over = over
+        if over not in ('domain','boundary'):
+            raise ValueError('Must choose "domain" or "boundary"')
+        self.__over = over
         self.ovr = None
     def __repr__(self) -> str:
         return f'<PDE : {self.eqn_str}>'
@@ -98,20 +100,22 @@ class PDE(TestTrialBase):
     @property
     def over(self):
         return self.__over
-    @over.setter
-    def over(self,value):
-        if value not in ('domain','boundary'):
-            raise ValueError('Must choose "domain" or "boundary"')
-        self.__over = value
     @property
     def ovr(self): # shorthand for self.over
-        return self.__ovr
+        if self.__ovr == None:
+            return 'Ω' if self.over == 'domain' else '∂Ω'
+        else:
+            return self.__ovr
     @ovr.setter
     def ovr(self,value):
         if value is None:
-            self.__ovr = 'Ω' if self.over == 'domain' else '∂Ω'
-        else:
-            self.__ovr = value
+            self.__ovr = None
+            return
+        if not isinstance(value,str):
+            raise TypeError('Must be a string')
+        if len(value) != 1:
+            raise ValueError('Must be a single character')
+        self.__ovr = value
     @property
     def ion(self):
         return 'in' if self.over == 'domain' else 'on'
