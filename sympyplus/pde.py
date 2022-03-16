@@ -1,6 +1,6 @@
 from sympyplus.param import GeneralForm, Param
 from sympyplus.form import lhsForm, rhsForm, TestTrialBase
-from sympyplus.variational import variational_derivative
+from sympyplus.variational import variational_derivative, secondVariationalDerivative
 
 def newtonsMethod(lhs_form,rhs_form,const_func,trial_func,test_func):
     const_func = Param(const_func)
