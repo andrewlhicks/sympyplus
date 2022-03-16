@@ -2,6 +2,20 @@ from sympy import Symbol
 from sympy import diff
 from sympyplus.param import Param, GeneralForm
 
+def variational_derivative(general_form,*params):
+    if not isinstance(general_form,GeneralForm):
+        raise TypeError('First positional arg must be GeneralForm')
+    for param in params:
+        if not isinstance(param,Param):
+            raise TypeError('Second and following positional args must be Param')
+    
+    # compute derivative, always assume w.r.t. first param of general_form
+    tau = Symbol('tau')
+    expr = general_form.eval(params[0]+params[-1]*tau,*params[1:-1])
+    expr = diff(expr,tau).subs(tau,0)
+
+    return GeneralForm(expr,*params,name=f'∂({general_form.name})')
+
 def variationalDerivative(lagrangian,*params,name=None):
     """ Given an instance of Lagrangian, returns a GeneralForm of order 2 which
     represents the first variational derivative of the Lagrangian object respect

@@ -1,7 +1,6 @@
-from multiprocessing.sharedctypes import Value
 from sympyplus.param import GeneralForm, Param
 from sympyplus.form import lhsForm, rhsForm, TestTrialBase
-from sympyplus.variational import variationalDerivative, secondVariationalDerivative
+from sympyplus.variational import variational_derivative
 
 def newtonsMethod(lhs_form,rhs_form,const_func,trial_func,test_func):
     const_func = Param(const_func)
@@ -69,6 +68,9 @@ class PDE(TestTrialBase):
             raise ValueError('Must choose "domain" or "boundary"')
         self.__over = over
         self.ovr = None
+    @classmethod
+    def empty(cls,trial_func,test_func,over='domain'):
+        return cls([],[],trial_func,test_func,over)
     def __repr__(self) -> str:
         return f'<PDE : {self.eqn_str}>'
     @property
@@ -133,3 +135,50 @@ class PDE(TestTrialBase):
             if not isinstance(form,GeneralForm):
                 raise TypeError('Form must be type GeneralForm.')
             hs.append(form)
+    
+    def newtons_method(self,trial_func_prev,test_func,diff_func):
+        """ Performs Newton's method on 'self', returns new pde 'new'.
+        
+        Newton's method can be thought of as the following:
+
+        Given a binary form A[Q](P) and a linear form F[P], we wish to find Q such that
+
+                A[Q](P) = F[P],                                     for all P.
+
+        We begin Newton's method with an initial guess Q(0), which must be sufficiently close
+        to the true solution Q. Then for each integer (n+1) we solve the following: Find
+        Q(n+1) such that
+        
+                ∂A[Q(n)](P,Q(n+1)-Q(n)) = -A[Q(n)](P) + L[P],       for all P.
+        
+        To simplify, we may define S(n+1) := Q(n+1) - Q(n) and then find S(n+1) such that
+
+                ∂A[Q(n)](P,S(n+1)) = -A[Q(n)](P) + L[P],            for all P.
+        
+        Then we simply add Q(n) to S(n+1) to achieve the desired Q(n+1). We repeat the process
+        until S(n+1) is sufficiently close to zero.
+
+        In the case of this function, I have chosen the following naming convention:
+
+            trial_func_prev     :           Q(n)
+            test_func           :           P
+            diff_func           :           S(n+1)
+        
+        Newton's method below uses this convention.
+         """
+
+        # define new empty PDE
+        new = PDE.empty(diff_func,test_func)
+
+        # add forms to lhs (could maybe use map() here)
+        for form in self.lhs:
+            new.add_form('lhs',variational_derivative(form,trial_func_prev,test_func,diff_func))
+
+        # add forms to rhs
+        for form in self.lhs:
+            new.add_form('rhs',form.mul(-1).new_params(trial_func_prev,test_func))
+        for form in self.rhs:
+            new.add_form('rhs',form.new_params(test_func))
+
+        # return completed PDE
+        return new

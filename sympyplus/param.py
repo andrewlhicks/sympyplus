@@ -155,7 +155,7 @@ class GeneralForm:
 
     def mul(self,n):
         new_expr = self.expr * n
-        return GeneralForm(new_expr,*self.params,name=self.name)
+        return self.__class__(new_expr,*self.params,name=f'(-{self.name})')
 
     def checkParam(self,param):
         if not isinstance(param,list):
