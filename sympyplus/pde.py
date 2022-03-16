@@ -1,3 +1,4 @@
+from sympyplus.fy import uflfy
 from sympyplus.param import GeneralForm, Param
 from sympyplus.form import lhsForm, rhsForm, TestTrialBase
 from sympyplus.variational import variational_derivative, secondVariationalDerivative
@@ -36,7 +37,6 @@ class PDE_System:
     @property
     def boundary(self):
         return self.__boundary
-
 
     def set_domain(self,domain_PDE):
         if domain_PDE is None:
@@ -182,3 +182,19 @@ class PDE(TestTrialBase):
 
         # return completed PDE
         return new
+    
+    def eval(self,*params):
+        if len(params) == 0:
+            lhs_expr = sum([form.eval() for form in self.lhs])
+            rhs_expr = sum([form.eval() for form in self.rhs])
+        elif len(params) == 2:
+            lhs_expr = sum([form.eval(*params) for form in self.lhs])
+            rhs_expr = sum([form.eval(params[-1]) for form in self.rhs])
+        else:
+            raise ValueError('Number of params must be 2')
+        
+        return {'lhs':lhs_expr,'rhs':rhs_expr}
+    
+    def uflfy(self):
+        # use dict comprehension to convert eval dict to ufl dict
+        return {k:uflfy(v) for k, v in self.eval().items()}
