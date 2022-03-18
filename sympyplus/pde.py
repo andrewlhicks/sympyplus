@@ -1,6 +1,6 @@
 from sympyplus.fy import uflfy
 from sympyplus.param import GeneralForm, Param
-from sympyplus.form import lhsForm, rhsForm, TestTrialBase
+from sympyplus.form import lhsForm, rhsForm, is_linear_param
 from sympyplus.variational import variational_derivative, secondVariationalDerivative
 
 def newtonsMethod(lhs_form,rhs_form,const_func,trial_func,test_func):
@@ -55,53 +55,67 @@ class PDE_System:
             raise ValueError('Boundary PDE must be over boundary')
         self.__boundary = boundary_PDE
 
-class PDE(TestTrialBase):
+class PDE:
     def __init__(self,lhs,rhs,trial_func,test_func,over='domain'):
-        # set trial and test funcs first
-        self.set_trial_func(trial_func)
-        self.set_test_func(test_func)
-        # then make sure lhs and rhs forms contain test and trial funcs
-        self.lhs = lhs
-        self.rhs = rhs
-        # Set over, ovr
+        # checks
+        if not isinstance(trial_func,Param):
+            raise TypeError('trial_func must be Param')
+        if not isinstance(test_func,Param):
+            raise TypeError('test_func must be Param')
         if over not in ('domain','boundary'):
             raise ValueError('Must choose "domain" or "boundary"')
+        # set trial and test funcs first
+        self.trial_func = trial_func
+        self.test_func = test_func
+        # then add the lhs and rhs forms
+        self.add_lhs_form(*lhs)
+        self.add_rhs_form(*rhs)
+        # finally set over, ovr
         self.__over = over
         self.ovr = None
-    @classmethod
-    def empty(cls,trial_func,test_func,over='domain'):
-        return cls([],[],trial_func,test_func,over)
     def __repr__(self) -> str:
         return f'<PDE : {self.eqn_str}>'
+    
+    # Class constructors
+
+    @classmethod
+    def empty(cls,trial_func,test_func,over='domain'):
+        """ Creates an empty PDE, i.e. with no domain or boundary
+        forms specified. """
+        return cls([],[],trial_func,test_func,over)
+
+    # Properties
+
+    @property
+    def trial_func(self):
+        return self.__trial_func
+    @trial_func.setter
+    def trial_func(self,value):
+        if not isinstance(value,Param):
+            raise TypeError('Must be Param')
+        self.__trial_func = value
+    
+    @property
+    def test_func(self):
+        return self.__test_func
+    @test_func.setter
+    def test_func(self,value):
+        if not isinstance(value,Param):
+            raise TypeError('Must be Param')
+        self.__test_func = value
+    
     @property
     def lhs(self):
         return self.__lhs
-    @lhs.setter
-    def lhs(self,value):
-        if not isinstance(value,list):
-            raise TypeError(f'Must be list')
-        for form in value:
-            if not isinstance (form,GeneralForm):
-                raise TypeError('Forms must be type GeneralForm')
-            if not self.trial_func in form.params or not self.test_func in form.params:
-                raise ValueError(f'The form {form.name} of lhs does not contain both test and trial function')
-        self.__lhs = value
+    
     @property
     def rhs(self):
         return self.__rhs
-    @rhs.setter
-    def rhs(self,value):
-        if not isinstance(value,list):
-            raise TypeError(f'Must be list')
-        for form in value:
-            if not isinstance (form,GeneralForm):
-                raise TypeError('Forms must be type GeneralForm')
-            if not self.test_func in form.params:
-                raise ValueError(f'The form {form.name} of lhs does not contain test function')
-        self.__rhs = value
+    
     @property
     def over(self):
         return self.__over
+    
     @property
     def ovr(self): # shorthand for self.over
         if self.__ovr == None:
@@ -118,24 +132,59 @@ class PDE(TestTrialBase):
         if len(value) != 1:
             raise ValueError('Must be a single character')
         self.__ovr = value
+    
     @property
     def ion(self):
         return 'in' if self.over == 'domain' else 'on'
+    
     @property
     def eqn_str(self):
         lhs = ' + '.join([repr(form) for form in self.lhs])
         rhs = ' + '.join([repr(form) for form in self.rhs])
         return f'[{lhs} = {rhs}] {self.ion} {self.ovr}'
     
+    # Proper methods
+
     def add_form(self,xhs,*forms): # maybe this should be the func used when lhs, rhs are initially created
         if xhs not in ('lhs','rhs'):
             raise ValueError('Must choose "lhs" or "rhs"')
-        hs = self.lhs if xhs == 'lhs'else self.rhs
+        if xhs == 'lhs':
+            self.add_lhs_form(*forms)
+        else:
+            self.add_rhs_form(*forms)
+
+    def add_lhs_form(self,*forms):
+        try:
+            self.__lhs
+        except AttributeError:
+            self.__lhs = []
         for form in forms:
             if not isinstance(form,GeneralForm):
                 raise TypeError('Form must be type GeneralForm.')
-            hs.append(form)
-    
+            if not self.trial_func in form.params:
+                raise ValueError(f'The form {form.name} of lhs does not contain trial func {self.trial_func}')
+            if not self.test_func in form.params:
+                raise ValueError(f'The form {form.name} of lhs does not contain test func {self.test_func}')
+            if not is_linear_param(form.eval(),self.test_func):
+                raise ValueError(f'Form {form.name} not linear in test func {self.test_func}')
+        for form in forms:
+            self.__lhs.append(form)
+
+    def add_rhs_form(self,*forms):
+        try:
+            self.__rhs
+        except AttributeError:
+            self.__rhs = []
+        for form in forms:
+            if not isinstance(form,GeneralForm):
+                raise TypeError('Form must be type GeneralForm.')
+            if not self.test_func in form.params:
+                raise ValueError(f'The form {form.name} of lhs does not contain test func {self.test_func}')
+            if not is_linear_param(form.eval(),self.test_func):
+                raise ValueError(f'Form {form.name} not linear in test func {self.test_func}')
+        for form in forms:
+            self.__rhs.append(form)
+
     def newtons_method(self,trial_func_prev,test_func,diff_func):
         """ Performs Newton's method on 'self', returns new pde 'new'.
         
