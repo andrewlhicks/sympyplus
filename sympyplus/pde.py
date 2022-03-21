@@ -143,6 +143,10 @@ class PDE:
         rhs = ' + '.join([repr(form) for form in self.rhs])
         return f'[{lhs} = {rhs}] {self.ion} {self.ovr}'
     
+    @property
+    def ufl(self):
+        return self.uflfy()
+
     # Proper methods
 
     def add_form(self,xhs,*forms): # maybe this should be the func used when lhs, rhs are initially created
