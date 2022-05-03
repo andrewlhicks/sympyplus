@@ -151,7 +151,7 @@ class PDE:
 
     def add_form(self,xhs,*forms): # maybe this should be the func used when lhs, rhs are initially created
         if xhs not in ('lhs','rhs'):
-            raise ValueError('Must choose "lhs" or "rhs"')
+            raise ValueError('Must choose "lhs" or "rhs" for first positional argument')
         if xhs == 'lhs':
             self.add_lhs_form(*forms)
         else:
@@ -188,6 +188,22 @@ class PDE:
                 raise ValueError(f'Form {form.name} not linear in test func {self.test_func}')
         for form in forms:
             self.__rhs.append(form)
+
+    def rmv_form(self,xhs,name):
+        if xhs not in ('lhs','rhs'):
+            raise ValueError('Must choose "lhs" or "rhs" for first positional argument')
+        _xhs = self.__lhs if xhs == 'lhs' else self.__rhs
+        for i, form in enumerate(_xhs):
+            if form.name == name:
+                del _xhs[i]
+                return
+        raise ValueError(f'No {xhs} form "{name}"')
+    
+    def rmv_lhs_form(self,name):
+        return self.rmv_form('lhs',name)
+
+    def rmv_rhs_form(self,name):
+        return self.rmv_form('rhs',name)
 
     def newtons_method(self,trial_func_prev,test_func,diff_func):
         """ Performs Newton's method on 'self', returns new pde 'new'.
