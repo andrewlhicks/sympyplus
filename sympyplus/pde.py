@@ -205,6 +205,16 @@ class PDE:
     def rmv_rhs_form(self,name):
         return self.rmv_form('rhs',name)
 
+    def clear_lhs(self):
+        self.__lhs = []
+    
+    def clear_rhs(self):
+        self.__rhs = []
+    
+    def clear(self):
+        self.clear_lhs()
+        self.clear_rhs()
+
     def newtons_method(self,trial_func_prev,test_func,diff_func):
         """ Performs Newton's method on 'self', returns new pde 'new'.
         
