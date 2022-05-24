@@ -84,6 +84,12 @@ class PDE:
         forms specified. """
         return cls([],[],trial_func,test_func,over)
 
+    def copy(self):
+        """ Creates PDE object which is a copy of self. """
+        new = self.__class__(self.__lhs,self.__rhs,self.trial_func,self.test_func,over=self.__over)
+        new.ovr = self.ovr
+        return new
+
     # Properties
 
     @property
