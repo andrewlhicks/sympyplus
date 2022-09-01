@@ -58,6 +58,10 @@ class EnergyForm:
     def __repr__(self):
         return f'<EnergyForm d={self.domain} b={self.boundary}>'
     
+    def copy(self):
+        new = self.__class__(*self.params,domain=self.__domain_0,boundary=self.__boundary_0)
+        return new
+
     @property
     def domain(self):
         return [repr(form) for form in self.__domain_0]
