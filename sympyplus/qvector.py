@@ -42,7 +42,7 @@ class AbstractVectorGradient(Matrix):
 
     def __new__(cls,abstractvector,dim=3):
         if not isinstance(abstractvector,AbstractVector):
-            raise TypeError('Must be type AbstractVector.')
+            return Matrix(abstractvector)
 
         abstractvectorgradient = Matrix([])
 
@@ -75,7 +75,7 @@ class QTensor(Matrix):
     The dx() method is the tensorfied dx() of the QVector. """
     def __new__(cls,qvector):
         if not isinstance(qvector,QVector):
-            raise TypeError('Must be type QVector.')
+            return Matrix(qvector)
         return super().__new__(cls,q_tensorfy(qvector))
     def __init__(self,qvector):
         self.vect = qvector
