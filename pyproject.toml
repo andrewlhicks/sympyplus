@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sympyplus"
+version = "0.0.1"
+description = "Extension of SymPy to handle expressions from PDEs"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.7"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Andrew Hicks", email = "andrew.hicksm@gmail.com" }
+]
+keywords = []
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "sympy"
+]
+
+[project.urls]
+# Homepage = ""
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
